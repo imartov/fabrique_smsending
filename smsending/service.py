@@ -1,0 +1,118 @@
+from datetime import datetime, timedelta
+import uuid, json, numpy, requests
+
+from django.core.mail import send_mail
+from .models import *
+from .serializers import MessageSerializer
+import logging
+
+logger = logging.getLogger('django')
+
+
+# temp
+test_send_list = [
+    {
+        "email": "alexandr.kosyrew@mail.ru",
+        "subject": "Message 1",
+        "message": "Message 1",
+        "datetime_run": datetime.now() + timedelta(minutes=3)
+    },
+    {
+        "email": "alexandr.kosyrew@mail.ru",
+        "subject": "Message 2",
+        "message": "Message 2",
+        "datetime_run": datetime.now() + timedelta(minutes=2)
+    },
+]
+
+def send(phone_number:str, message:str) -> int:
+    uniqid = get_uniq_id()
+    url_send_mes = f'https://probe.fbrq.cloud/v1/send/{uniqid}'
+    json_params = {
+        "id": uniqid,
+        "phone": int(phone_number),
+        'text': message
+    }
+    logger.info(f'{datetime.now()} | Sending a message to a client\n/
+                id of message - {uniqid}, phone - {phone_number}')
+    logger.info(f'{datetime.now()} | Sending an API request to url - {url_send_mes} and waiting a response.')
+    try:
+        response = requests.post(url=url_send_mes, json=json_params)
+        logger.info(f'{datetime.now()} | Response received. Status code of API request - {response.json()["code"]}.')
+        return response.json()["code"]
+    except Exception as ex:
+        logger.info(f'{datetime.now()} | Something went wrong while sending the message.\n{ex}')
+
+def get_clients(phone_code:int, tag:str) -> list:
+    logger.info(f'{datetime.now()} | Client acquisition started by next filters:\n/
+                phone_code - {phone_code}, tag - {tag}.')
+    clients = list(Client.objects.filter(phone_code=phone_code).filter(tag=tag)\
+    .values('id', 'phone_number', 'timezone'))
+    logger.info(f'{datetime.now()} | Client acquisition completed. Count - {len(clients)}.')
+
+    # temp code
+    # queryset = Client.objects.filter(phone_code=925).filter(tag='first_cat')\
+    # .order_by('timezone').values('phone_number', 'timezone')
+    return clients
+
+def compare_time(clients_list:list,
+                 datetime_run:datetime,
+                 datetime_finish:datetime) -> tuple:
+    logger.info(f'{datetime.now()} | Sorting of clients has begun.')
+    now_clients_list = []
+    delay_clients_list = []
+    for client in clients_list:
+        datetime_run_tz = datetime_run.replace(tzinfo=client['timezone'])
+        datetime_finish_tz = datetime_finish.replace(tzinfo=client['timezone'])
+        client['datetime_run'] = datetime_run_tz
+        client['datetime_finish'] = datetime_finish_tz
+        now_tz = datetime.now().astimezone(client['timezone'])
+        if now_tz >= datetime_run_tz and now_tz <= datetime_finish_tz:
+            now_clients_list.append(client)
+        elif datetime_run_tz > now_tz:
+            delay_clients_list.append(client)
+    logger.info(f'{datetime.now()} | Sorting of clients completed.\n/
+                Number of clients to whom messages will be sent now - {len(now_clients_list)}.\n/
+                Number of clients to whom messages will be scheduled to be sent - {len(delay_clients_list)}.')
+    return now_clients_list, delay_clients_list
+
+def get_uniq_id() -> int:
+    uniqint = uuid.uuid4().int & (1<<40)-1
+    return numpy.int64(uniqint)
+
+def create_message(datetime_send:datetime,
+                   status_send:int,
+                   sms_sending:int,
+                   client:int):
+    logger.error(f'{datetime.now()} | The creation of the Messages object and adding to the database has begun.\n/
+                 datetime_send - {datetime_send}, status_send - {status_send}, sms_sending_id - {sms_sending}, client_id - {client}.')
+    object_data = {
+        'datetime_send': datetime_send,
+        'status_send': status_send,
+        'sms_sending': sms_sending,
+        'client': client
+    }
+    serializer = MessageSerializer(data=object_data)
+
+    if serializer.is_valid():
+        serializer.save()
+        logger.info(f'{datetime.now()} | The Messages object was successfully created and saved.')
+    else:
+        logger.info(f'{datetime.now()} | Something went wrong while creating the object.\n/
+                    Validation failed:\n{serializer.errors}.')
+
+# temp func
+def get_test_sending(self):
+    sending = list(Sending.objects.filter(id=4).values('id', 'datetime_run', 'datetime_finish'))
+    return sending
+
+# temp func
+def service_send(subject:str, message:str, email:str):
+    send_mail(subject, message, 'pythontest285@gmail.com',
+        [email], fail_silently=False)
+
+def main():
+    pass
+
+if __name__ == "__main__":
+    main()

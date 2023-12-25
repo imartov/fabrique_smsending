@@ -1,0 +1,17 @@
+# test
+test.py
+
+# commands
+commands.txt
+
+# celery cache
+celerybeat-schedule.bak
+celerybeat-schedule.dat
+celerybeat-schedule.dir
+
+# __pycache__
+smsending/__pycache__/
+config/__pycache__/
+
+# migrations
+smsending/migrations/
