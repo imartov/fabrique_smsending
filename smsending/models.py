@@ -39,8 +39,8 @@ class Client(models.Model):
 class Message(models.Model):
     datetime_send = models.DateTimeField()
     status_send = models.IntegerField()
-    sms_sending = models.ForeignKey(Sending, on_delete=models.DO_NOTHING, related_name="smsending")
-    client = models.ForeignKey(Client, on_delete=models.DO_NOTHING, related_name="client")
+    sms_sending = models.ForeignKey(Sending, on_delete=models.SET_NULL, null=True, related_name="smsending")
+    client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True, related_name="client")
 
     def __str__(self):
         return f'{self.datetime_send}-{self.status_send}'
