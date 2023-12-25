@@ -15,3 +15,6 @@ config/__pycache__/
 
 # migrations
 smsending/migrations/
+
+# logging
+django.log

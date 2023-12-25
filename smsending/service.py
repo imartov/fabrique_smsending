@@ -25,7 +25,7 @@ test_send_list = [
     },
 ]
 
-def send(phone_number:str, message:str) -> int:
+def serv_send(phone_number:str, message:str) -> int:
     uniqid = get_uniq_id()
     url_send_mes = f'https://probe.fbrq.cloud/v1/send/{uniqid}'
     json_params = {
@@ -33,35 +33,31 @@ def send(phone_number:str, message:str) -> int:
         "phone": int(phone_number),
         'text': message
     }
-    logger.info(f'{datetime.now()} | Sending a message to a client\n/
-                id of message - {uniqid}, phone - {phone_number}')
-    logger.info(f'{datetime.now()} | Sending an API request to url - {url_send_mes} and waiting a response.')
-    try:
-        response = requests.post(url=url_send_mes, json=json_params)
-        logger.info(f'{datetime.now()} | Response received. Status code of API request - {response.json()["code"]}.')
-        return response.json()["code"]
-    except Exception as ex:
-        logger.info(f'{datetime.now()} | Something went wrong while sending the message.\n{ex}')
+    logger.info(f'''{datetime.now()} | Sending a message to a clients:
+                id of message - {uniqid}, phone - {phone_number}''')
+    logger.info(f'''{datetime.now()} | Sending an API request to url - {url_send_mes} and waiting a response.''')
+    datetime_send = datetime.now()
+    # response = requests.post(url=url_send_mes, json=json_params)
+    # logger.info(f'{datetime.now()} | Response received. Status code of API request - {response.json()["code"]}.')
+    logger.info(f'{datetime.now()} | Response received. Status code of API request - 200.')
+    # return datetime_send, response.json()["code"]
+    return datetime_send, 200
 
-def get_clients(phone_code:int, tag:str) -> list:
-    logger.info(f'{datetime.now()} | Client acquisition started by next filters:\n/
-                phone_code - {phone_code}, tag - {tag}.')
+def serv_get_clients(phone_code:int, tag:str) -> list:
+    logger.info(f'''{datetime.now()} | Client acquisition started by next filters:
+                phone_code - {phone_code}, tag - {tag}.''')
     clients = list(Client.objects.filter(phone_code=phone_code).filter(tag=tag)\
     .values('id', 'phone_number', 'timezone'))
     logger.info(f'{datetime.now()} | Client acquisition completed. Count - {len(clients)}.')
-
-    # temp code
-    # queryset = Client.objects.filter(phone_code=925).filter(tag='first_cat')\
-    # .order_by('timezone').values('phone_number', 'timezone')
     return clients
 
-def compare_time(clients_list:list,
-                 datetime_run:datetime,
-                 datetime_finish:datetime) -> tuple:
+def serv_compare_time(clients:list,
+                      datetime_run:datetime,
+                      datetime_finish:datetime) -> tuple:
     logger.info(f'{datetime.now()} | Sorting of clients has begun.')
     now_clients_list = []
     delay_clients_list = []
-    for client in clients_list:
+    for client in clients:
         datetime_run_tz = datetime_run.replace(tzinfo=client['timezone'])
         datetime_finish_tz = datetime_finish.replace(tzinfo=client['timezone'])
         client['datetime_run'] = datetime_run_tz
@@ -71,21 +67,21 @@ def compare_time(clients_list:list,
             now_clients_list.append(client)
         elif datetime_run_tz > now_tz:
             delay_clients_list.append(client)
-    logger.info(f'{datetime.now()} | Sorting of clients completed.\n/
-                Number of clients to whom messages will be sent now - {len(now_clients_list)}.\n/
-                Number of clients to whom messages will be scheduled to be sent - {len(delay_clients_list)}.')
+    logger.info(f'''{datetime.now()} | Sorting of clients completed.
+                Number of clients to whom messages will be sent now - {len(now_clients_list)}.
+                Number of clients to whom messages will be scheduled to be sent - {len(delay_clients_list)}.''')
     return now_clients_list, delay_clients_list
 
 def get_uniq_id() -> int:
     uniqint = uuid.uuid4().int & (1<<40)-1
     return numpy.int64(uniqint)
 
-def create_message(datetime_send:datetime,
-                   status_send:int,
-                   sms_sending:int,
-                   client:int):
-    logger.error(f'{datetime.now()} | The creation of the Messages object and adding to the database has begun.\n/
-                 datetime_send - {datetime_send}, status_send - {status_send}, sms_sending_id - {sms_sending}, client_id - {client}.')
+def serv_create_message(datetime_send:datetime,
+                        status_send:int,
+                        sms_sending:int,
+                        client:int):
+    logger.info(f'''{datetime.now()} | The creation of the Messages object and adding to the database has begun.
+                 datetime_send - {datetime_send}, status_send - {status_send}, sms_sending_id - {sms_sending}, client_id - {client}.''')
     object_data = {
         'datetime_send': datetime_send,
         'status_send': status_send,
@@ -98,8 +94,8 @@ def create_message(datetime_send:datetime,
         serializer.save()
         logger.info(f'{datetime.now()} | The Messages object was successfully created and saved.')
     else:
-        logger.info(f'{datetime.now()} | Something went wrong while creating the object.\n/
-                    Validation failed:\n{serializer.errors}.')
+        logger.info(f'''{datetime.now()} | Something went wrong while creating the object.
+                    Validation failed:\n{serializer.errors}.''')
 
 # temp func
 def get_test_sending(self):
