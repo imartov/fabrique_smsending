@@ -12,8 +12,12 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import logging
+import environ
 
 from django.forms import ValidationError
+
+env = environ.Env()
+environ.Env.read_env()
 
 # from django.conf.global_settings import PHONENUMBER_DEFAULT_REGION
 
@@ -98,9 +102,9 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'fabrique_sms_sending',
-        'USER': 'postgres',
-        'PASSWORD': 'XyLus9jX',
+        'NAME': env('DATABASE_NAME'),
+        'USER': env('DATABASE_USER'),
+        'PASSWORD': env('DATABASE_PASSWORD'),
         'HOST': 'localhost',  # Set to your PostgreSQL host
         'PORT': '5432',       # Set to your PostgreSQL port
     }
@@ -174,9 +178,9 @@ FLOWER_UNAUTHENTICATED_API = True
 # smtp
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
-DEFAULT_FROM_EMAIL = 'pythontest285@gmail.com'
-EMAIL_HOST_USER = 'pythontest285@gmail.com'
-EMAIL_HOST_PASSWORD = 'hhyblqqkvgtjoadq'
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL')
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 EMAIL_PORT = 587
 
 LOGGING = {

@@ -5,25 +5,12 @@ from django.core.mail import send_mail
 from .models import *
 from .serializers import MessageSerializer
 import logging
+import environ
 
 logger = logging.getLogger('django')
+env = environ.Env()
+environ.Env.read_env()
 
-
-# temp
-test_send_list = [
-    {
-        "email": "alexandr.kosyrew@mail.ru",
-        "subject": "Message 1",
-        "message": "Message 1",
-        "datetime_run": datetime.now() + timedelta(minutes=3)
-    },
-    {
-        "email": "alexandr.kosyrew@mail.ru",
-        "subject": "Message 2",
-        "message": "Message 2",
-        "datetime_run": datetime.now() + timedelta(minutes=2)
-    },
-]
 
 def serv_send(phone_number:str, message:str) -> int:
     uniqid = get_uniq_id()
@@ -33,11 +20,14 @@ def serv_send(phone_number:str, message:str) -> int:
         "phone": int(phone_number),
         'text': message
     }
+    headers = {
+        'Authorization': env('API_TOKEN')
+    }
     logger.info(f'''{datetime.now()} | Sending a message to a clients:
                 id of message - {uniqid}, phone - {phone_number}''')
     logger.info(f'''{datetime.now()} | Sending an API request to url - {url_send_mes} and waiting a response.''')
     datetime_send = datetime.now()
-    # response = requests.post(url=url_send_mes, json=json_params)
+    # response = requests.post(url=url_send_mes, json=json_params, headers=headers)
     # logger.info(f'{datetime.now()} | Response received. Status code of API request - {response.json()["code"]}.')
     logger.info(f'{datetime.now()} | Response received. Status code of API request - 200.')
     # return datetime_send, response.json()["code"]
