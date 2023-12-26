@@ -392,7 +392,9 @@ The project complies with Django standards and has the following models.
 - `client` (integer): Id of the Client object to whom it was sent
 
 
+## Features
 
+- **Timezone**. When creating or updating a Sending object, you must specify the date and time of the start of the sending and the end of the sending without taking into account the client's time zone. The code itself transforms times into the appropriate time zone for each client that matches the filters. 
 
 ## Contributing
 
