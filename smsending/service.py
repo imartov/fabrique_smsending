@@ -87,15 +87,6 @@ def serv_create_message(datetime_send:datetime,
         logger.info(f'''{datetime.now()} | Something went wrong while creating the object.
                     Validation failed:\n{serializer.errors}.''')
 
-# temp func
-def get_test_sending(self):
-    sending = list(Sending.objects.filter(id=4).values('id', 'datetime_run', 'datetime_finish'))
-    return sending
-
-# temp func
-def service_send(subject:str, message:str, email:str):
-    send_mail(subject, message, 'pythontest285@gmail.com',
-        [email], fail_silently=False)
 
 def main():
     pass

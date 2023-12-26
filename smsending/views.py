@@ -40,10 +40,6 @@ class SendingViewSet(viewsets.ModelViewSet):
     # temp func
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
-        actual_sending = Sending.objects.values('datetime_run', 'message', 'phone_code_filter', 'tag_filter', 'datetime_finish').filter(id=59).exists()
-        if actual_sending:
-            actual_sending = Sending.objects.values('datetime_run', 'message', 'phone_code_filter', 'tag_filter', 'datetime_finish').filter(id=59)
-            print(list(actual_sending)[0])
         return response
     
     def perform_create(self, serializer):

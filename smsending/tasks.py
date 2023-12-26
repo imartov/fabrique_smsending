@@ -116,9 +116,14 @@ def create_message(datetime_send:datetime,
 def run(send_id:int, datetime_run:datetime,
         message:str, phone_code_filter:int,
         tag_filter:str, datetime_finish:datetime):
+    
     logger.info(f'''{datetime.now()} | Sending object data got for Celery.
                 id - {send_id}, datetime_run - {datetime_run}, message - {message},
                 phone_code_filter - {phone_code_filter}, tag_filter - {tag_filter}, datetime_finish - {datetime_finish}''')
+    
+    if datetime.now().astimezone(pytz.utc) > datetime_finish:
+        logger.info(f'{datetime.now()} | datetime_finish for Sending with ID = {send_id} has expired.')
+        return
     
     clients = get_clients(phone_code=phone_code_filter, tag=tag_filter)
 
