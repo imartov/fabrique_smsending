@@ -40,6 +40,10 @@ class SendingViewSet(viewsets.ModelViewSet):
     # temp func
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
+        actual_sending = Sending.objects.values('datetime_run', 'message', 'phone_code_filter', 'tag_filter', 'datetime_finish').filter(id=59).exists()
+        if actual_sending:
+            actual_sending = Sending.objects.values('datetime_run', 'message', 'phone_code_filter', 'tag_filter', 'datetime_finish').filter(id=59)
+            print(list(actual_sending)[0])
         return response
     
     def perform_create(self, serializer):
@@ -59,10 +63,26 @@ class SendingViewSet(viewsets.ModelViewSet):
         instance.save()
         return Response(serializer.data)
 
-
 class SendingUpdateView(generics.UpdateAPIView):
     queryset = Sending.objects.all()
     serializer_class = SendingSerializer
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        logger.info(f'''{datetime.now()} | Sending object updated.
+                    Id - {instance.id}, datetime_run - {instance.datetime_run},
+                    message - {instance.message}, phone_code_filter - {instance.phone_code_filter},
+                    tag_filter - {instance.tag_filter}, datetime_finish - {instance.datetime_finish}''')
+        run.delay(send_id=instance.id,
+                  datetime_run=instance.datetime_run,
+                  message=instance.message,
+                  phone_code_filter=instance.phone_code_filter,
+                  tag_filter=instance.tag_filter,
+                  datetime_finish=instance.datetime_finish)
+        print(f"Object with id {instance.id} has been updated.")
+
+        # You can also return a custom response
+        return Response({"message": "Object updated successfully"})    
 
 class SendingDeleteView(generics.DestroyAPIView):
     queryset = Sending.objects.all()
