@@ -24,6 +24,9 @@ def delay_send(send_id:int, client_id:int, phone_number:str,
                message:str, datetime_run:datetime, phone_code_filter:int,
                tag_filter:str, datetime_finish: datetime) -> tuple:
     
+    if datetime.now().astimezone(pytz.utc) > datetime_finish:
+        logger.info(f'{datetime.now()} | Sheduled Message sending was canceled because the sending time for client with ID = {send_id} has expired.')
+        return
     actual_sending = Sending.objects.values('datetime_run', 'message', 'phone_code_filter', 'tag_filter', 'datetime_finish').filter(id=send_id).exists()
     if actual_sending:
         actual_sending = list(Sending.objects.values('datetime_run', 'message', 'phone_code_filter', 'tag_filter', 'datetime_finish').filter(id=send_id))[0]
