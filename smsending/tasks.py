@@ -93,10 +93,12 @@ def get_clients(phone_code:int, tag:str) -> list:
 
 
 @app.task
-def compare_time(clients:list,
+def compare_time(send_id:int,
+                 clients:list,
                  datetime_run:datetime,
                  datetime_finish:datetime) -> list:
-    return serv_compare_time(clients=clients,
+    return serv_compare_time(send_id=send_id,
+                             clients=clients,
                              datetime_run=datetime_run,
                              datetime_finish=datetime_finish)
 
@@ -127,7 +129,8 @@ def run(send_id:int, datetime_run:datetime,
     
     clients = get_clients(phone_code=phone_code_filter, tag=tag_filter)
 
-    now_clients_list, delay_clients_list = compare_time(clients=clients,
+    now_clients_list, delay_clients_list = compare_time(send_id=send_id,
+                                                        clients=clients,
                                                         datetime_run=datetime_run,
                                                         datetime_finish=datetime_finish)
     if now_clients_list:

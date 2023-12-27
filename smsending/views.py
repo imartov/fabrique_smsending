@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from .models import *
 from .serializers import *
 from .tasks import run
+from .service import check_bussines_interval
 import logging
 
 logger = logging.getLogger('django')
@@ -40,6 +41,7 @@ class SendingViewSet(viewsets.ModelViewSet):
     # temp func
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
+        check_bussines_interval(client_id=19, datetime_finish='', datetime_run='')
         return response
     
     def perform_create(self, serializer):
@@ -75,9 +77,6 @@ class SendingUpdateView(generics.UpdateAPIView):
                   phone_code_filter=instance.phone_code_filter,
                   tag_filter=instance.tag_filter,
                   datetime_finish=instance.datetime_finish)
-        print(f"Object with id {instance.id} has been updated.")
-
-        # You can also return a custom response
         return Response({"message": "Object updated successfully"})    
 
 class SendingDeleteView(generics.DestroyAPIView):

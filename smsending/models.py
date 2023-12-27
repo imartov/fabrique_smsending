@@ -31,6 +31,8 @@ class Client(models.Model):
     phone_code = models.IntegerField()
     tag = models.CharField(max_length=255)
     timezone = TimeZoneField(default='Europe/Moscow')
+    interval_from = models.TimeField(blank=True, null=True, verbose_name='Business interval from')
+    interval_to = models.TimeField(blank=True, null=True, verbose_name='Business interval to')
 
     def __str__(self):
         return f'{self.phone_number}-{self.tag}-{self.timezone}'
