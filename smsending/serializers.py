@@ -19,6 +19,11 @@ class SendingSerializer(serializers.ModelSerializer):
         model = Sending
         fields = ['id', 'datetime_run', 'message', 'phone_code_filter', 'tag_filter', 'datetime_finish', 'messages']
 
+    def validate(self, data):
+        if data['datetime_run'] > data['datetime_finish']:
+            raise serializers.ValidationError("The data and time start sending must occur after the data and time end sending")
+        return data
+
     def get_messages(self, obj):
         all_count = Message.objects.filter(sms_sending=obj).count()
         if all_count == 0:
