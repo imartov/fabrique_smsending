@@ -380,6 +380,8 @@ The project complies with Django standards and has the following models.
 - `phone_code` (integer): Mobile operator code
 - `tag` (string): Tag (arbitrary label)
 - `timezone` (integer): Timezone. For example "Europe/Moscow"
+- `notificate_from` (datetime): Business notification start time
+- `notificate_to` (datetime): End time for business otifications
 
 ### Message
 
@@ -394,7 +396,12 @@ The project complies with Django standards and has the following models.
 
 ## Features
 
-- **Timezone**. When creating or updating a Sending object, you must specify the date and time of the start of the sending and the end of the sending without taking into account the client's time zone. The code itself transforms times into the appropriate time zone for each client that matches the filters. 
+- **Timezone**. When creating or updating a Sending object, you must specify the date and time of the start of the sending and the end of the sending without taking into account the client's time zone. The code itself transforms times into the appropriate time zone for each client that matches the filters.  
+Thus, you just need to indicate the start and end time of the mailing, and the service itself will take care that at the specified time for each client, taking into account his time zone, the mailing starts at the specified time and ends. 
+- **Business notification interval (11)**. Each client can be assigned the following values: start of notification time and end of notification time. These values when creating or updating a Sending object will allow you to compare the start time of the sending and the end time of the sending, and depending on the result of the comparison:
+    1. Change them for a specific client (if the start time of the sending is earlier than the start time of business notifications and (or) the end time of the sending is later than the end time of business notifications);
+    2. Leave unchanged (if the start time of sending is earlier than or equal to the start time of business notifications and (or) the end time of sending is earlier than or equal to the end time of business notifications);
+    3. Or remove from the sending list (if the start time of the sending is later than the end time of business notifications and (or) the end time of the sending is earlier than the start time of business notifications).
 
 ## Contributing
 
