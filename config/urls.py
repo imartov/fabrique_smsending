@@ -19,5 +19,5 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('smsending.urls')),
+    path('fabrique-smsending/api/v1/', include('smsending.urls')),
 ]

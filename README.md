@@ -127,12 +127,14 @@ You can use the API documentation in <b>OpenAPI</b> format <a href="https://app.
 
 ### Endpoints
 
+To date, the service API is presented only in the first version and has the following server: `http://127.0.0.1:8000/fabrique-smsending/api/v1`.
+
 #### Create a client | <b>`POST /client/create/`</b>
 
 **Description**: Create object of Client model
 
 ```bash
-curl -X POST "http://127.0.0.1:8000/client/create/" -H "Content-Type: application/json" -d '{
+curl -X POST "http://127.0.0.1:8000/fabrique-smsending/api/v1/client/create/" -H "Content-Type: application/json" -d '{
     "phone_number": "7XXXXXXXXXX",
     "phone_code": 0,
     "tag": "any_tag",
@@ -154,7 +156,7 @@ curl -X POST "http://127.0.0.1:8000/client/create/" -H "Content-Type: applicatio
 **Description**: Update object of Client model
 
 ```bash
-curl -X PUT "http://127.0.0.1:8000/client/update/${clientId}/" -H "Content-Type: application/json" -d '{
+curl -X PUT "http://127.0.0.1:8000/fabrique-smsending/api/v1/client/update/${clientId}/" -H "Content-Type: application/json" -d '{
     "phone_number": "7XXXXXXXXXX",
     "phone_code": 1,
     "tag": "any_tag_updated",
@@ -176,7 +178,7 @@ curl -X PUT "http://127.0.0.1:8000/client/update/${clientId}/" -H "Content-Type:
 **Description**: Delete object of Client model
 
 ```bash
-curl -X DELETE "http://127.0.0.1:8000/client/delete/${clientId}/"
+curl -X DELETE "http://127.0.0.1:8000/fabrique-smsending/api/v1/client/delete/${clientId}/"
 ```
 **Response:** `204 No Content`
 
@@ -185,7 +187,7 @@ curl -X DELETE "http://127.0.0.1:8000/client/delete/${clientId}/"
 **Description**: Get all objects (list) of Sending model and general statistics on created mailings and the number of messages sent on them, grouped by status
 
 ```bash
-curl -X GET "http://127.0.0.1:8000/sending/get/"
+curl -X GET "http://127.0.0.1:8000/fabrique-smsending/api/v1/sending/get/"
 ```
 **Response:**
 ```json
@@ -249,7 +251,7 @@ curl -X GET "http://127.0.0.1:8000/sending/get/"
 **Description**: Get object of Sending model and detailed statistics of sent messages for a specific object
 
 ```bash
-curl -X GET "http://127.0.0.1:8000/sending/detail/${sendingId}/"
+curl -X GET "http://127.0.0.1:8000/fabrique-smsending/api/v1/sending/detail/${sendingId}/"
 ```
 **Response:**
 ```json
@@ -303,7 +305,7 @@ curl -X GET "http://127.0.0.1:8000/sending/detail/${sendingId}/"
 **Description**: Create an object of Sending model
 
 ```bash
-curl -X POST "http://127.0.0.1:8000/sending/create/" -H "Content-Type: application/json" -d '{
+curl -X POST "http://127.0.0.1:8000/fabrique-smsending/api/v1/sending/create/" -H "Content-Type: application/json" -d '{
   "datetime_run": "YYYY-MM-DDTHH:MM:SS.ffffffZ",
   "message": "any_text",
   "phone_code_filter": 0,
@@ -327,7 +329,7 @@ curl -X POST "http://127.0.0.1:8000/sending/create/" -H "Content-Type: applicati
 **Description**: Update an object of Sending model
 
 ```bash
-curl -X PUT "http://127.0.0.1:8000/sending/create/${sendingId}/" -H "Content-Type: application/json" -d '{
+curl -X PUT "http://127.0.0.1:8000/fabrique-smsending/api/v1/sending/create/${sendingId}/" -H "Content-Type: application/json" -d '{
   "datetime_run": "YYYY-MM-DDTHH:MM:SS.ffffffZ",
   "message": "any_text",
   "phone_code_filter": 0,
@@ -351,7 +353,7 @@ curl -X PUT "http://127.0.0.1:8000/sending/create/${sendingId}/" -H "Content-Typ
 **Description**: Delete an object of Sending model
 
 ```bash
-curl -X DELETE "http://127.0.0.1:8000/sending/delete/${sendingId}/"
+curl -X DELETE "http://127.0.0.1:8000/fabrique-smsending/api/v1/sending/delete/${sendingId}/"
 ```
 **Response:** `204 No Content`
 
@@ -381,7 +383,7 @@ The project complies with Django standards and has the following models.
 - `tag` (string): Tag (arbitrary label)
 - `timezone` (integer): Timezone. For example "Europe/Moscow"
 - `notificate_from` (datetime): Business notification start time
-- `notificate_to` (datetime): End time for business otifications
+- `notificate_to` (datetime): End time for business notifications
 
 ### Message
 
@@ -395,6 +397,8 @@ The project complies with Django standards and has the following models.
 
 
 ## Features
+
+The service has the following useful functions and features that should make your work easier:
 
 - **Timezone**. When creating or updating a Sending object, you must specify the date and time of the start of the sending and the end of the sending without taking into account the client's time zone. The code itself transforms times into the appropriate time zone for each client that matches the filters.  
 Thus, you just need to indicate the start and end time of the mailing, and the service itself will take care that at the specified time for each client, taking into account his time zone, the mailing starts at the specified time and ends. 

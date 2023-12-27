@@ -11,7 +11,7 @@ class ClientSerializer(serializers.ModelSerializer):
     read_only_fields = ('id',)
     class Meta:
         model = Client
-        fields = ('phone_number', 'phone_code', 'tag', 'timezone', 'interval_from', 'interval_to')
+        fields = ('phone_number', 'phone_code', 'tag', 'timezone', 'notificate_from', 'notificate_to')
 
 class SendingSerializer(serializers.ModelSerializer):
     messages = serializers.SerializerMethodField()
