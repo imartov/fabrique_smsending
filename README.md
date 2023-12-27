@@ -182,7 +182,7 @@ curl -X DELETE "http://127.0.0.1:8000/fabrique-smsending/api/v1/client/delete/${
 ```
 **Response:** `204 No Content`
 
-#### Get sendings | <b>`GET /sending/get/`</b>
+#### Get sendings | <b>`GET /sendings/get/`</b>
 
 **Description**: Get all objects (list) of Sending model and general statistics on created mailings and the number of messages sent on them, grouped by status
 
