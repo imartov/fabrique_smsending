@@ -105,7 +105,7 @@ def check_bussines_interval(client_id:int, datetime_run:datetime, datetime_finis
 
     new_datetime_run = datetime_run
     new_datetime_finish = datetime_finish
-    client = list(Client.objects.filter(id=client_id).values_list('interval_from', 'interval_to'))[0]    
+    client = list(Client.objects.filter(id=client_id).values_list('notificate_from', 'notificate_to'))[0]    
     if client[0]:
         logger.info(f'{datetime.now()} | Client ID - {client_id} | The client has a business interval, the initial notification time - {client[0].strftime("%H:%M:%S")}.')
         if client[0] >= datetime_run.time():
