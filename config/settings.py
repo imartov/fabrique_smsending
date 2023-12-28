@@ -186,17 +186,57 @@ EMAIL_PORT = 587
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'default': {
+            'format': "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        }
+    },
     'handlers': {
-        'file': {
-            'level': 'DEBUG',
+        'sending': {
+            'level': 'INFO',
             'class': 'logging.FileHandler',
-            'filename': 'django.log',
+            'filename': 'fabrique_logging/sending.log',
+            "formatter": "default",
+        },
+        'message': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'fabrique_logging/message.log',
+            "formatter": "default",
+        },
+        'client': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'fabrique_logging/client.log',
+            "formatter": "default",
+        },
+        'celery': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': 'fabrique_logging/celery.log',
+            "formatter": "default",
         },
     },
     'loggers': {
-        'django': {
-            'handlers': ['file'],
-            'level': 'DEBUG',
+        'sending': {
+            'handlers': ['sending'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'message': {
+            'handlers': ['message'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'client': {
+            'handlers': ['client'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'celery': {
+            'handlers': ['celery'],
+            'level': 'INFO',
             'propagate': True,
         },
     },

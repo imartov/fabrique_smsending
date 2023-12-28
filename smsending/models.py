@@ -39,8 +39,8 @@ class Client(models.Model):
 
 
 class Message(models.Model):
-    datetime_send = models.DateTimeField()
-    status_send = models.IntegerField()
+    datetime_send = models.DateTimeField(blank=True, null=True)
+    status_send = models.IntegerField(blank=True, null=True)
     sms_sending = models.ForeignKey(Sending, on_delete=models.SET_NULL, null=True, related_name="smsending")
     client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True, related_name="client")
 

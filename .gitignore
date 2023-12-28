@@ -18,6 +18,10 @@ smsending/migrations/
 
 # logging
 django.log
+fabrique_logging/client.log
+fabrique_logging/message.log
+fabrique_logging/sending.log
+fabrique_logging/celery.log
 
 # .env
 config/.env

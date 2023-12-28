@@ -407,8 +407,8 @@ Thus, you just need to indicate the start and end time of the mailing, and the s
     2. Leave unchanged (if the start time of sending is earlier than or equal to the start time of business notifications and (or) the end time of sending is earlier than or equal to the end time of business notifications);
     3. Or remove from the sending list (if the start time of the sending is later than the end time of business notifications and (or) the end time of the sending is earlier than the start time of business notifications).
 - **Validators**. The service has several validators to check the correctness when creating or updating objects.
-1. *Phone number validator*. The phone number must have the format: **7ХХХХХХХХХХ**. If the entered phone number does not correspond to this form, the service will warn you about this and will not allow you to create or update an object.
-2. *Date validators*. The start date and time of the sending cannot be later than the end date and time of the sending, just like the start and end time of business notifications.
+    1. *Phone number validator*. The phone number must have the format: **7ХХХХХХХХХХ**. If the entered phone number does not correspond to this form, the service will warn you about this and will not allow you to create or update an object.
+    2. *Date validators*. The start date and time of the sending cannot be later than the end date and time of the sending, just like the start and end time of business notifications.
 
 ## Contributing
 

@@ -14,8 +14,9 @@ class ClientSerializer(serializers.ModelSerializer):
         fields = ('phone_number', 'phone_code', 'tag', 'timezone', 'notificate_from', 'notificate_to')
 
     def validate(self, data):
-        if data['notificate_from'] > data['notificate_to']:
-            raise serializers.ValidationError("The notifications end time must occur after the notifications start time")
+        if data['notificate_from'] and data['notificate_to']:
+            if data['notificate_from'] > data['notificate_to']:
+                raise serializers.ValidationError("The notifications end time must occur after the notifications start time")
         return data
 
 class SendingSerializer(serializers.ModelSerializer):
@@ -25,8 +26,9 @@ class SendingSerializer(serializers.ModelSerializer):
         fields = ['id', 'datetime_run', 'message', 'phone_code_filter', 'tag_filter', 'datetime_finish', 'messages']
 
     def validate(self, data):
-        if data['datetime_run'] > data['datetime_finish']:
-            raise serializers.ValidationError("The data and time end sending must occur after the data and time start sending")
+        if data['datetime_run'] and data['datetime_finish']:
+            if data['datetime_run'] > data['datetime_finish']:
+                raise serializers.ValidationError("The data and time end sending must occur after the data and time start sending")
         return data
 
     def get_messages(self, obj):

@@ -8,15 +8,18 @@ from celery.result import AsyncResult
 from .models import Sending
 
 from config.celery import app
-from .service import (serv_compare_time, serv_create_message,
-                      serv_get_clients, serv_send)
+from .service import (serv_compare_time, serv_create_message_and_get_id,
+                      serv_get_clients, serv_send, serv_update_message)
 
-logger = logging.getLogger('django')
+sending_logger = logging.getLogger('sending')
+client_logger = logging.getLogger('client')
+celery_logger = logging.getLogger('celery')
 
 
 @shared_task
-def send(phone_number:str, message:str) -> tuple:
-    datetime_send, status_send = serv_send(phone_number=phone_number, message=message)
+def send(client_id:int, send_id:int, phone_number:str, message:str) -> tuple:
+    datetime_send, status_send = serv_send(client_id=client_id, send_id=send_id,
+                                           phone_number=phone_number, message=message)
     return datetime_send, status_send
 
 @shared_task
@@ -24,9 +27,15 @@ def delay_send(send_id:int, client_id:int, phone_number:str,
                message:str, datetime_run:datetime, phone_code_filter:int,
                tag_filter:str, datetime_finish: datetime) -> tuple:
     
+    celery_logger.info(f'Sending ID - {send_id} | Client ID - {client_id} | Celery has started sending the scheduled message.')
+    sending_logger.info(f'Sending ID - {send_id} | Client ID - {client_id} | Send a scheduled message.')
+    client_logger.info(f'Client ID - {client_id} | Sending ID - {send_id} | Send a scheduled message.')
+
     if datetime.now().astimezone(pytz.utc) > datetime_finish:
-        logger.info(f'{datetime.now()} | Sheduled Message sending was canceled because the sending time for client with ID = {send_id} has expired.')
+        sending_logger.info(f'Sending ID - {send_id} | Client ID - {client_id} | Sheduled message sending was canceled because the sending time for the client has expired.')
+        client_logger.info(f'Client ID - {client_id} | Sending ID - {send_id} | Sheduled message sending was canceled because the sending time for the client has expired.')
         return
+    
     actual_sending = Sending.objects.values('datetime_run', 'message', 'phone_code_filter', 'tag_filter', 'datetime_finish').filter(id=send_id).exists()
     if actual_sending:
         actual_sending = list(Sending.objects.values('datetime_run', 'message', 'phone_code_filter', 'tag_filter', 'datetime_finish').filter(id=send_id))[0]
@@ -35,37 +44,35 @@ def delay_send(send_id:int, client_id:int, phone_number:str,
         actual_sending['phone_code_filter'] != phone_code_filter or\
         actual_sending['tag_filter'] != tag_filter or\
         actual_sending['datetime_finish'] != datetime_finish:
-            logger.info(f'{datetime.now()} | Message sending was canceled because the Sending object with ID = {send_id} was changed.')
+        
+            sending_logger.info(f'Sending ID - {send_id} | Client ID - {client_id} | Message sending was canceled because the Sending object was changed.')
+            client_logger.info(f'Client ID - {client_id} | Sending ID - {send_id} | Message sending was canceled because the Sending object was changed.')
             return
         else:
-            datetime_send, status_send = serv_send(phone_number=phone_number, message=message)
-            create_message(datetime_send=datetime_send,
-                        status_send=status_send,
-                        sms_sending=send_id,
-                        client=client_id)
+            send(client_id=client_id, send_id=send_id,
+                 phone_number=phone_number, message=message)
     else:
-        logger.info(f'{datetime.now()} | Message sending was canceled because the Sending object with ID = {send_id} no longer exists.')
+        sending_logger.info(f'Sending ID - {send_id} | Client ID - {client_id} | Message sending was canceled because the Sending object was deleted.')
+        client_logger.info(f'Client ID - {client_id} | Sending ID - {send_id} | Message sending was canceled because the Sending object was deleted.')
         return
 
 @app.task
 def now_countdown(send_id:int, clients:list, message:str) -> None:
-    logger.info(f'{datetime.now()} | Sending to clients has begun.')
+    sending_logger.info(f'Sending ID - {send_id} | The current mass sending to clients has begun.')
+    celery_logger.info(f'Sending ID - {send_id} | Celery started executing the current sending.')
     clients_couter = 0
     for client in clients:
         now_tz = datetime.now().astimezone(client['timezone'])
         if now_tz > client['datetime_finish']:
-            logger.info(f'''{datetime.now()} | Sending to clients was forcibly stopped because the sending time has expired.
+            sending_logger.info(f'''Sending ID - {send_id} | Sending to clients was forcibly stopped because the sending time has expired.
                         Number of messages sent - {clients_couter}, not sent - {len(clients) - clients_couter}.''')
             break
         else:
-            datetime_send, status_send = send(phone_number=client['phone_number'], message=message)
-            logger.info(f'{datetime.now()} | result_values: {datetime_send} {status_send}.')
+            send(send_id=send_id, client_id=client['id'],
+                 phone_number=client['phone_number'], message=message)
             clients_couter += 1
-            create_message(datetime_send=datetime_send,
-                           status_send=status_send,
-                           sms_sending=send_id,
-                           client=client['id'])
-    logger.info(f'{datetime.now()} | Sending to clients completed.')
+    celery_logger.info(f'Sending ID - {send_id} | Celery finished executing the current sending.')
+    sending_logger.info(f'Sending ID - {send_id} | The current mass sending to clients has ended.')
 
 
 @app.task
@@ -73,7 +80,9 @@ def delay_countdown(send_id:int, clients:list, message:str,
                     datetime_run:datetime, phone_code_filter:int,
                     tag_filter:str, datetime_finish:datetime) -> None:
     
-    logger.info(f'{datetime.now()} | Sheduling for sending messages has begun.')
+    sending_logger.info(f'Sending ID - {send_id} | Sheduling to send messages has begun.')
+    celery_logger.info(f'Sending ID - {send_id} | Celery started sheduling to send messages.')
+
     delay = 0
     for client in clients:
         exec_time = client['datetime_run'].astimezone(pytz.utc) + timedelta(seconds=delay)
@@ -82,57 +91,29 @@ def delay_countdown(send_id:int, clients:list, message:str,
                                        'datetime_run': datetime_run, 'phone_code_filter': phone_code_filter,
                                        'tag_filter': tag_filter, 'datetime_finish': datetime_finish}, eta=exec_time)
         
-        logger.info(f'{datetime.now()} | Sending a message to the client - {client["phone_number"]} is scheduled for {exec_time}.')
-        delay += 2
-    logger.info(f'{datetime.now()} | Sheduling for sending messages completed.')
-
-
-@app.task
-def get_clients(phone_code:int, tag:str) -> list:
-    return serv_get_clients(phone_code=phone_code, tag=tag)
-
-
-@app.task
-def compare_time(send_id:int,
-                 clients:list,
-                 datetime_run:datetime,
-                 datetime_finish:datetime) -> list:
-    return serv_compare_time(send_id=send_id,
-                             clients=clients,
-                             datetime_run=datetime_run,
-                             datetime_finish=datetime_finish)
-
-
-@shared_task
-def create_message(datetime_send:datetime,
-                   status_send:int,
-                   sms_sending:int,
-                   client:int):
-    serv_create_message(datetime_send=datetime_send,
-                           status_send=status_send,
-                           sms_sending=sms_sending,
-                           client=client)
-
+        client_logger.info(f'Client ID - {client["id"]} | Sending ID - {send_id} | The message to the client is scheduled to be sent on {exec_time}.')
+        sending_logger.info(f'Sending ID - {send_id} | Client ID - {client["id"]} | The message to the client is scheduled to be sent on {exec_time}.')
+        delay += 0.5
+    sending_logger.info(f'Sending ID - {send_id} | Sheduling for sending messages completed.')
+    celery_logger.info(f'Sending ID - {send_id} | Sheduling for sending messages completed.')
+    
 
 @app.task
 def run(send_id:int, datetime_run:datetime,
         message:str, phone_code_filter:int,
         tag_filter:str, datetime_finish:datetime):
     
-    logger.info(f'''{datetime.now()} | Sending object data got for Celery.
-                id - {send_id}, datetime_run - {datetime_run}, message - {message},
-                phone_code_filter - {phone_code_filter}, tag_filter - {tag_filter}, datetime_finish - {datetime_finish}''')
+    celery_logger.info(f'Sending ID - {send_id} | Сelery received Sending object.')
     
     if datetime.now().astimezone(pytz.utc) > datetime_finish:
-        logger.info(f'{datetime.now()} | datetime_finish for Sending with ID = {send_id} has expired.')
+        sending_logger.info(f'Sending ID - {send_id} | Sending end time has expired.')
         return
     
-    clients = get_clients(phone_code=phone_code_filter, tag=tag_filter)
-
-    now_clients_list, delay_clients_list = compare_time(send_id=send_id,
-                                                        clients=clients,
-                                                        datetime_run=datetime_run,
-                                                        datetime_finish=datetime_finish)
+    clients = serv_get_clients(send_id=send_id, phone_code=phone_code_filter, tag=tag_filter)
+    now_clients_list, delay_clients_list = serv_compare_time(send_id=send_id,
+                                                             clients=clients,
+                                                             datetime_run=datetime_run,
+                                                             datetime_finish=datetime_finish)
     if now_clients_list:
         now_countdown(send_id=send_id, clients=now_clients_list, message=message)
     if delay_clients_list:
@@ -141,3 +122,4 @@ def run(send_id:int, datetime_run:datetime,
         delay_countdown(send_id=send_id, clients=delay_clients_list, message=message,
                         datetime_run=datetime_run, phone_code_filter=phone_code_filter,
                         tag_filter=tag_filter, datetime_finish=datetime_finish)
+    celery_logger.info(f'Sending ID - {send_id} | The main task - "run" for the Sending object is completed.')

@@ -9,7 +9,7 @@ from .tasks import run
 from .service import check_bussines_interval
 import logging
 
-logger = logging.getLogger('django')
+sending_logger = logging.getLogger('sending')
 
 
 # client object
@@ -45,13 +45,10 @@ class SendingViewSet(viewsets.ModelViewSet):
         return response
     
     def perform_create(self, serializer):
-        logger.info(f'''{datetime.now()} | Request has been sent to create Sending object.
-                    Method: POST, url: http://127.0.0.1:8000/sending/create/.''')
+        sending_logger.info('Request has been sent to create Sending object. Method: POST, url: http://127.0.0.1:8000/sending/create/.')
         instance = serializer.save()
-        logger.info(f'''{datetime.now()} | Sending object saved.
-                    Id - {instance.id}, datetime_run - {instance.datetime_run},
-                    message - {instance.message}, phone_code_filter - {instance.phone_code_filter},
-                    tag_filter - {instance.tag_filter}, datetime_finish - {instance.datetime_finish}''')
+        sending_logger.info(f'''Sending ID - {instance.id} | Sending object saved.
+                            datetime_run - {instance.datetime_run}, message - {instance.message}, phone_code_filter - {instance.phone_code_filter}, tag_filter - {instance.tag_filter}, datetime_finish - {instance.datetime_finish}''')
         run.delay(send_id=instance.id,
                   datetime_run=instance.datetime_run,
                   message=instance.message,
@@ -67,10 +64,8 @@ class SendingUpdateView(generics.UpdateAPIView):
 
     def perform_update(self, serializer):
         instance = serializer.save()
-        logger.info(f'''{datetime.now()} | Sending object updated.
-                    Id - {instance.id}, datetime_run - {instance.datetime_run},
-                    message - {instance.message}, phone_code_filter - {instance.phone_code_filter},
-                    tag_filter - {instance.tag_filter}, datetime_finish - {instance.datetime_finish}''')
+        sending_logger.info(f'''Sending ID - {instance.id} | Sending object updated.
+                            datetime_run - {instance.datetime_run}, message - {instance.message}, phone_code_filter - {instance.phone_code_filter}, tag_filter - {instance.tag_filter}, datetime_finish - {instance.datetime_finish}''')
         run.delay(send_id=instance.id,
                   datetime_run=instance.datetime_run,
                   message=instance.message,
