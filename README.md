@@ -38,6 +38,12 @@ fabrique_sms_sending/
 │   ├── urls.py
 │   └── wsgi.py
 │
+├── fabrique_logging/
+│   ├── celery.log
+│   ├── client.log
+│   ├── message.log
+│   └── sending.log
+│
 ├── smsending/
 │   ├── __pycache__/
 │   ├── migrations/
@@ -409,6 +415,11 @@ Thus, you just need to indicate the start and end time of the mailing, and the s
 - **Validators**. The service has several validators to check the correctness when creating or updating objects.
     1. *Phone number validator*. The phone number must have the format: **7ХХХХХХХХХХ**. If the entered phone number does not correspond to this form, the service will warn you about this and will not allow you to create or update an object.
     2. *Date validators*. The start date and time of the sending cannot be later than the end date and time of the sending, just like the start and end time of business notifications.
+- **Logging**. The service provides a detailed logging system. The folder with logs is located in the root of the project - `fabrique_logging` and includes the following files:
+    1. `celery.log` - celery logging;
+    2. `client.log` - logging of any operations that are related to a specific client (adding/editing/sending a message, etc.) linked to the ID;
+    3. `message.log` - logging of any operations for a specific message (all requests and responses from an external service, all processing of a specific message, etc.) with reference to the ID;
+    4. `sending.log` - logging of any operations for a specific newsletter (both requests to the API and external requests to send specific messages, etc.) with reference to the ID
 
 ## Contributing
 
