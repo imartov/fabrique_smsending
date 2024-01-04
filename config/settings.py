@@ -47,10 +47,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    #service
+    # service
     'rest_framework',
     'timezone_field',
     'phonenumber_field',
+    'django_celery_results',
+    'django_celery_beat',
 
     # custom
     'smsending.apps.SmsendingConfig'
@@ -176,6 +178,7 @@ CELERY_TIMEZONE = 'UTC'
 FLOWER_UNAUTHENTICATED_API = True
 
 # smtp
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL')

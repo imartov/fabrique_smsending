@@ -1,11 +1,13 @@
 from datetime import datetime, timedelta
-import uuid, json, numpy, requests
 
-from django.core.mail import send_mail
+from django.db.models import Q
 from .models import *
 from .serializers import MessageSerializer
 import logging
 import environ
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from redmail import gmail
 
 sending_logger = logging.getLogger('sending')
 message_logger = logging.getLogger('message')
@@ -157,10 +159,158 @@ def remove_clients(send_id:int, remove_list:list, clients:list) -> list:
     return new_clients
 
 
-# temp test
-def get_sending(id:int) -> None:
-    sending = list(Sending.objects.filter(id=id).values_list('datetime_run', 'datetime_finish'))[0]
-    return sending
+class SendStat:
+    def __init__(self) -> None:
+        pass
+
+    def get_stat(self, by_date=datetime.now() - timedelta(days=1)) -> dict:
+        time_slots = {
+            "Ночь": {
+                "from": datetime.strptime("00:01", "%H:%M"),
+                "to": datetime.strptime("07:59", "%H:%M"),
+            },
+            "Утро": {
+                "from": datetime.strptime("08:00", "%H:%M"),
+                "to": datetime.strptime("09:59", "%H:%M"),
+            },
+            "Позднее утро": {
+                "from": datetime.strptime("10:00", "%H:%M"),
+                "to": datetime.strptime("11:59", "%H:%M"),
+            },
+            "Обед": {
+                "from": datetime.strptime("12:00", "%H:%M"),
+                "to": datetime.strptime("13:59", "%H:%M"),
+            },
+            "Поздний обед": {
+                "from": datetime.strptime("14:00", "%H:%M"),
+                "to": datetime.strptime("16:59", "%H:%M"),
+            },
+            "Вечер": {
+                "from": datetime.strptime("17:00", "%H:%M"),
+                "to": datetime.strptime("20:59", "%H:%M"),
+            },
+            "Поздний вечер": {
+                "from": datetime.strptime("21:00", "%H:%M"),
+                "to": datetime.strptime("23:59", "%H:%M"),
+            },
+        }
+
+        count_time_slots = {"Ночь": 0, "Утро": 0, "Позднее утро": 0, "Обед": 0, "Поздний обед": 0, "Вечер": 0, "Поздний вечер": 0}
+
+        created_sendings_count = Sending.objects.filter(created_date__date=by_date).count()
+        sent_messages_count = Message.objects.filter(datetime_send__date=by_date).count()
+        success_sent_messages_count = Message.objects.filter(datetime_send__date=by_date).filter(status_send=200).count()
+
+        if success_sent_messages_count and sent_messages_count:
+            success_precent = success_sent_messages_count / sent_messages_count * 100
+        else:
+            success_precent = "No sent messages"
+
+        datetime_sent_messages = list(Message.objects.filter(datetime_send__date=by_date).values_list('datetime_send'))
+        for datetime_message in datetime_sent_messages:
+            datetime_message = datetime_message[0].time()
+            if datetime_message >= time_slots["Ночь"]['from'].time() and datetime_message <= time_slots["Ночь"]['to'].time():
+                count_time_slots["Ночь"] += 1
+            if datetime_message >= time_slots["Утро"]['from'].time() and datetime_message <= time_slots["Утро"]['to'].time():
+                count_time_slots["Утро"] += 1
+            if datetime_message >= time_slots["Позднее утро"]['from'].time() and datetime_message <= time_slots["Позднее утро"]['to'].time():
+                count_time_slots["Позднее утро"] += 1
+            if datetime_message >= time_slots["Обед"]['from'].time() and datetime_message <= time_slots["Обед"]['to'].time():
+                count_time_slots["Обед"] += 1
+            if datetime_message >= time_slots["Поздний обед"]['from'].time() and datetime_message <= time_slots["Поздний обед"]['to'].time():
+                count_time_slots["Поздний обед"] += 1
+            if datetime_message >= time_slots["Вечер"]['from'].time() and datetime_message <= time_slots["Вечер"]['to'].time():
+                count_time_slots["Вечер"] += 1
+            if datetime_message >= time_slots["Поздний вечер"]['from'].time() and datetime_message <= time_slots["Поздний вечер"]['to'].time():
+                count_time_slots["Поздний вечер"] += 1
+
+        max_key_count = max(count_time_slots, key=count_time_slots.get)
+        if count_time_slots[max_key_count]:
+            time_slots_precent = count_time_slots[max_key_count] / sent_messages_count * 100
+        else:
+            time_slots_precent = "No sent messages"
+
+        context_data = {
+            "created_sendings_count": created_sendings_count,
+            "sent_messages_count": sent_messages_count,
+            "success_precent": success_precent
+        }
+        time_slot = {
+            "label": max_key_count,
+            "time_slot_from": time_slots[max_key_count]["from"].strftime("%H:%M"),
+            "time_slot_to": time_slots[max_key_count]["to"].strftime("%H:%M"),
+            "precent": time_slots_precent
+        }
+        return context_data, time_slot
+
+    def get_sended_and_sheduled_messages(self, sendings:dict) -> tuple:
+        sended_messages = []
+        sheduled_messages = []
+        for sending in sendings:
+            send_messages = list(Message.objects.filter(sms_sending=sending['id']).filter(~Q(status_send=000))\
+                .values('id', 'datetime_send', 'status_send', 'client'))
+            if send_messages:
+                sended_messages.append(
+                    {
+                    "sending_id": sending['id'],
+                    "messages": send_messages
+                    }
+                )
+            shed_messages = list(Message.objects.filter(sms_sending=sending['id']).filter(status_send=000)\
+                .values('id', 'datetime_send', 'status_send', 'client'))
+            if shed_messages:
+                sheduled_messages.append(
+                    {
+                        "sending_id": sending['id'],
+                        "messages": shed_messages
+                    }
+                )
+        if not sended_messages:
+            sended_messages = "No sended messages"
+        if not sheduled_messages:
+            sheduled_messages = "No sheduled messages"
+        return sended_messages, sheduled_messages
+
+    def get_sent_messages(self, datetime_send=datetime.now().date()) -> dict:
+        today_sent_messages = list(Message.objects.filter(datetime_send__date=datetime_send).values('datetime_send', 'status_send', 'sms_sending', 'client'))
+        new_today_sent_messages = []
+        for message in today_sent_messages:
+            sending = list(Sending.objects.filter(Q(created_date__date__lt=datetime_send) | Q(updated_date__date__lt=datetime_send))\
+                .filter(id=message['sms_sending']).values('id', 'message','created_date', 'updated_date'))[0]
+            if sending:
+                message["sending"] = {
+                    "send_id": sending['id'],
+                    "message": sending['message'],
+                    "created_date": sending['created_date'],
+                    "updated_date": sending['updated_date'],
+                }
+                new_today_sent_messages.append(message)
+            return new_today_sent_messages if new_today_sent_messages else "No messages"
+
+    def send_redmail(self, context_data:dict, time_slot:dict) -> None:
+        gmail.username = env('DEFAULT_FROM_EMAIL')
+        gmail.password = env('EMAIL_HOST_PASSWORD')
+        with open('smsending\\templates\\stat_cid_rmail.html', 'r', encoding='utf-8') as file:
+            html_content = file.read()
+        gmail.send(
+            subject="Fabrique | Daily statistics on Sendings",
+            receivers=[env('DEFAULT_FROM_EMAIL')],
+            html=html_content,
+            body_images={
+                "corp_logo": "smsending\\templates\\static\\img\\corplogo_2.png",
+                "inst_icon": "smsending\\templates\\static\\img\\instagram-icon.png",
+                "link_icon": "smsending\\templates\\static\\img\\linkedin-icon.png",
+                "site_icon": "smsending\\templates\\static\\img\\site-icon.png",
+            },
+            body_params={
+                "context_data": context_data,
+                "time_slot": time_slot,
+            }
+        )
+
+    def run(self) -> None:
+        context_data, time_slot = self.get_stat()
+        self.send_redmail(context_data, time_slot)
 
 
 def main():

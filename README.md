@@ -47,6 +47,10 @@ fabrique_sms_sending/
 ├── smsending/
 │   ├── __pycache__/
 │   ├── migrations/
+│   ├── templates/
+│       ├── static/
+│       └── stat_cid_rmail.html
+│
 │   ├── __init__.py
 │   ├── admin.py
 │   ├── apps.py
@@ -116,6 +120,9 @@ docker run -d -p 6379:6379 redis
 
 # Run Django web-server
 python manage.py runserver
+
+# Start Celery beat
+celery -A config beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 
 # Start Celery worker
 celery -A config worker -l INFO -P eventlet
@@ -378,6 +385,8 @@ The project complies with Django standards and has the following models.
 - `phone_code_filter` (integer): Client properties filter - mobile operator code
 - `tag_filter` (string): Client properties filter - tag
 - `datetime_finish` (datetime): Sending end date and time in the ISO 8601 format. For example: "YYYY-MM-DDTHH:MM:SS.ssssssZ"
+- `created_date` (datetime): Date and time the Sending object was created
+- `updated_date` (datetime): Date and time the Sending object was updated
 
 ### Client
 
@@ -420,6 +429,17 @@ Thus, you just need to indicate the start and end time of the mailing, and the s
     2. `client.log` - logging of any operations that are related to a specific client (adding/editing/sending a message, etc.) linked to the ID;
     3. `message.log` - logging of any operations for a specific message (all requests and responses from an external service, all processing of a specific message, etc.) with reference to the ID;
     4. `sending.log` - logging of any operations for a specific newsletter (both requests to the API and external requests to send specific messages, etc.) with reference to the ID.
+- **Sending statistics (8)**. Every day at 07:00 (UTС), the service sends statistics to the email address specified in the environment variables. The scope of statistics includes such parameters as:
+    - number of created mailings over the past day
+    - number of messages sent over the past day
+    - percentage of successfully delivered messages
+    - the most active period for sending messages
+
+    This logic is implemented using the following apps, classes and methods and methods:
+    - config.settings.INSTALLED_APPS.django_celery_beat
+    - config.celery.app.conf.beat_schedule.send_stat
+    - smsending.tasks.send_stat
+    - smsending.service.SendStat
 
 ## Contributing
 

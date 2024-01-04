@@ -11,7 +11,7 @@ class ClientSerializer(serializers.ModelSerializer):
     read_only_fields = ('id',)
     class Meta:
         model = Client
-        fields = ('phone_number', 'phone_code', 'tag', 'timezone', 'notificate_from', 'notificate_to')
+        fields = ('id', 'phone_number', 'phone_code', 'tag', 'timezone', 'notificate_from', 'notificate_to')
 
     def validate(self, data):
         if data['notificate_from'] and data['notificate_to']:
@@ -21,9 +21,11 @@ class ClientSerializer(serializers.ModelSerializer):
 
 class SendingSerializer(serializers.ModelSerializer):
     messages = serializers.SerializerMethodField()
+    read_only_fields = ('id', 'created_date', 'updated_date')
     class Meta:
         model = Sending
-        fields = ['id', 'datetime_run', 'message', 'phone_code_filter', 'tag_filter', 'datetime_finish', 'messages']
+        fields = ['id', 'datetime_run', 'message', 'phone_code_filter', 'tag_filter',
+                  'datetime_finish', 'messages', 'created_date', 'updated_date']
 
     def validate(self, data):
         if data['datetime_run'] and data['datetime_finish']:

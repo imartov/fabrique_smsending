@@ -2,6 +2,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.dispatch import receiver
 from timezone_field import TimeZoneField
+from django.utils import timezone
 
 
 def phone_number_validator(value):
@@ -21,6 +22,8 @@ class Sending(models.Model):
     phone_code_filter = models.IntegerField()
     tag_filter = models.CharField(max_length=255)
     datetime_finish = models.DateTimeField()
+    created_date = models.DateTimeField(auto_now_add=True, blank=True, null=True, verbose_name='Date of creation')
+    updated_date = models.DateTimeField(auto_now=True, null=True, verbose_name='Update date')
 
     def __str__(self):
         return self.message[:10]

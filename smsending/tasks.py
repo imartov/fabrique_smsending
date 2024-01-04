@@ -9,7 +9,8 @@ from .models import Sending
 
 from config.celery import app
 from .service import (serv_compare_time, serv_create_message_and_get_id,
-                      serv_get_clients, serv_send, serv_update_message)
+                      serv_get_clients, serv_send, serv_update_message,
+                      SendStat)
 
 sending_logger = logging.getLogger('sending')
 client_logger = logging.getLogger('client')
@@ -99,9 +100,9 @@ def delay_countdown(send_id:int, clients:list, message:str,
     
 
 @app.task
-def run(send_id:int, datetime_run:datetime,
-        message:str, phone_code_filter:int,
-        tag_filter:str, datetime_finish:datetime):
+def run_send_and_sheduled_messages(send_id:int, datetime_run:datetime,
+                                   message:str, phone_code_filter:int,
+                                   tag_filter:str, datetime_finish:datetime):
     
     celery_logger.info(f'Sending ID - {send_id} | Сelery received Sending object.')
     
@@ -123,3 +124,8 @@ def run(send_id:int, datetime_run:datetime,
                         datetime_run=datetime_run, phone_code_filter=phone_code_filter,
                         tag_filter=tag_filter, datetime_finish=datetime_finish)
     celery_logger.info(f'Sending ID - {send_id} | The main task - "run" for the Sending object is completed.')
+
+@app.task
+def send_stat() -> None:
+    sendstat = SendStat()
+    sendstat.run()

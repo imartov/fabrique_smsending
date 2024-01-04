@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- <meta name="color-scheme" content="light only"> -->
+    <meta name="color-scheme" content="light dark">
+    <title>Document</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+       .logo-container {
+            max-width: 620px;
+            margin: 0 auto;
+            border-top: 1px solid #e0e0e0;
+            border-left: 1px solid #e0e0e0;
+            border-right: 1px solid #e0e0e0;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            padding-left: 20px;
+            padding-top: 10px;
+            background-color: white;
+        }
+        .corp-logo {
+            margin: 0px;
+            max-width: 30%;
+            background-color: white;
+        }
+        .img-logo {
+            max-width: 100%;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Container Styles */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding-top: 0px;
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-bottom: 20px;
+            background-color: #ffffff;
+            border-left: 1px solid #e0e0e0;
+            border-right: 1px solid #e0e0e0;
+        }
+
+        /* Header Styles */
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #333333;
+            font-size: 24px;
+            margin: 0;
+            padding: 0;
+            }
+
+        /* Content Styles */
+        .content {
+            margin-bottom: 20px;
+        }
+
+        .content p {
+            color: #555555;
+            font-size: 16px;
+            line-height: 1.5;
+            margin: 0 0 10px;
+            padding: 0;
+        }
+
+        .footer {
+            text-align: center;
+            color: #777777;
+            font-size: 14px;
+        }
+
+        .container-footer {
+            background-color: black;
+            max-width: 640px;
+            margin: 0 auto;
+            border-left: 1px solid black;
+            border-right: 1px solid black;
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            padding-left: 0%;
+            padding-top: 0px;
+        }
+
+        .footer-links {
+            margin-left: auto;
+            margin-right: auto;
+            display: table;
+            margin-bottom: 20px;
+            padding-top: 20px;
+        }
+
+        .icon-round {
+            /* float: left; */
+            border-radius: 100px;
+            background-color: white;
+            margin: 0px;
+            padding: 0px;
+            border: 0px;
+            width: 50px;
+            height: 50px;
+            border: 10px;
+            border-color: black;
+        }
+
+        .social-icon {
+            margin: 0px;
+            padding: 0px;
+            border: 0px;
+            border-color: black;
+        }
+
+        .icon-link {
+            margin: 0px;
+            padding: 0px;
+            border: 0px;
+            border-color: black;
+            text-decoration: none;
+        }
+
+        .icon-table-cell {
+            display: table-cell;
+        }
+
+        .company-description {
+            margin-left: auto;
+            margin-right: auto;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding-bottom: 20px;
+        }
+
+        .contacts-text {
+            border: 0px;
+            padding: 1px;
+            margin: 0px;
+        }
+
+        .table-company-name {
+            display: table;
+            margin-left: auto;
+            margin-right: auto;
+            padding: 1px;
+        }
+
+        .contacts-text-company-name {
+            display: table-cell;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="logo-container">
+        <div class="corp-logo"></div>
+            <a href="https://fabrique.studio/">
+                <img class="img-logo" src="{{ corp_logo.src }}" alt="Fabruque" title="Fabruque" aria-label="Fabruque">
+            </a>
+        </div>
+    </div>
+
+      
+    <div class="container">
+        <div class="row">
+
+            <div class="header">
+                <h1>Daily statistics on Sendings</h1>
+            </div>
+            <div class="content">
+                <p class="static_field">Количество созданных вчера рассылок: {{ context_data["created_sendings_count"] }}</p>
+                <p class="static_field">Количество отправленных вчера сообщений: {{ context_data["sent_messages_count"] }}</p>
+                <p class="static_field">Процент успешно доставленных сообщений: {{ context_data["success_precent"] }}</p>
+                {% if context_data["sent_messages_count"] != 0 %}
+                    <p class="static_field">Наиболее активный период: {{ time_slot["label"] }}, время: с {{ time_slot["label"] }} по {{ time_slot["label"] }}, процент от общего числа - {{ time_slot["precent"] }}</p>
+                {% else %}
+                    <p class="static_field">Наиболее активный период: No sent messages</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="container-footer">
+        <footer class="footer">
+            <div class="footer-links">
+
+                <div class="icon-table-cell">
+                    <div class="icon-round">
+                        <a href="https://www.instagram.com/" target="_blank" class="icon-link">
+                            <img src="{{ inst_icon.src }}" alt="Instagram" class="social-icon" width="50" height="50">
+                            <!-- <img src="cid:{instagram_icon}" alt="Instagram" class="social-icon" width="50" height="50"> -->
+                        </a>
+                    </div>
+                </div>  
+                
+                <div class="icon-table-cell">
+                    <div class="icon-round">
+                        <a href="https://www.linkedin.com/" target="_blank" class="icon-link">
+                            <img src="{{ link_icon.src }}" alt="LinkedIn" class="social-icon" width="50" height="50">
+                            <!-- <img src="cid:{linkedin_cid}" alt="LinkedIn" class="social-icon" width="50" height="50"> -->
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="icon-table-cell">
+                    <div class="icon-round">
+                        <a href="https://fabrique.studio/" target="_blank" class="icon-link">
+                            <img src="{{ site_icon.src }}" alt="Instagram" class="social-icon" width="50" height="50">
+                            <!-- <img src="cid:{site_icon}" alt="Instagram" class="social-icon" width="50" height="50"> -->
+                        </a>
+                    </div>
+                </div> 
+
+            </div>
+            <div class="company-description">
+                <!-- <div class="table-company-name"> -->
+                    <p class="contacts-text" style="padding-right: 4px;">ООО «Фабрика Решений» &copy; 2024</p> 
+                <!-- </div> -->
+                <p class="contacts-text">ИНН - 9706003698</p>
+                <p class="contacts-text">129090, г. Москва, Проспект Мира, 3с3</p>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>

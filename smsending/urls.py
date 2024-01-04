@@ -4,7 +4,7 @@ from .views import *
 
 urlpatterns = [
     # client
-    path('client/create/', ClientCreateView.as_view(), name='client-create'), # http://127.0.0.1:8000/fabrique-smsending/api/v1/client/create/
+    path('client/create/', ClientViewSet.as_view({'post': 'create'}), name='client-create'), # http://127.0.0.1:8000/fabrique-smsending/api/v1/client/create/
     path('client/update/<int:pk>/', ClientUpdateView.as_view(), name='client-update'), # http://127.0.0.1:8000/fabrique-smsending/api/v1/client/update/{clientId}/
     path('client/delete/<int:pk>/', ClientDeleteView.as_view(), name='client-delete'), # http://127.0.0.1:8000/fabrique-smsending/api/v1/client/delete/{clientId}/
 
