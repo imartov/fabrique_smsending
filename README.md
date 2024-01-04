@@ -415,21 +415,26 @@ The project complies with Django standards and has the following models.
 
 The service has the following useful functions and features that should make your work easier:
 
-- **Timezone**. When creating or updating a Sending object, you must specify the date and time of the start of the sending and the end of the sending without taking into account the client's time zone. The code itself transforms times into the appropriate time zone for each client that matches the filters.  
+- **Timezone**.  
+When creating or updating a Sending object, you must specify the date and time of the start of the sending and the end of the sending without taking into account the client's time zone. The code itself transforms times into the appropriate time zone for each client that matches the filters.  
 Thus, you just need to indicate the start and end time of the mailing, and the service itself will take care that at the specified time for each client, taking into account his time zone, the mailing starts at the specified time and ends. 
-- **Business notification interval (11)**. Each client can be assigned the following values: start of notification time and end of notification time. These values when creating or updating a Sending object will allow you to compare the start time of the sending and the end time of the sending, and depending on the result of the comparison:
+- **Business notification interval (11)**.  
+Each client can be assigned the following values: start of notification time and end of notification time. These values when creating or updating a Sending object will allow you to compare the start time of the sending and the end time of the sending, and depending on the result of the comparison:
     1. Change them for a specific client (if the start time of the sending is earlier than the start time of business notifications and (or) the end time of the sending is later than the end time of business notifications);
     2. Leave unchanged (if the start time of sending is earlier than or equal to the start time of business notifications and (or) the end time of sending is earlier than or equal to the end time of business notifications);
     3. Or remove from the sending list (if the start time of the sending is later than the end time of business notifications and (or) the end time of the sending is earlier than the start time of business notifications).
-- **Validators**. The service has several validators to check the correctness when creating or updating objects.
+- **Validators**.  
+The service has several validators to check the correctness when creating or updating objects.
     1. *Phone number validator*. The phone number must have the format: **7ХХХХХХХХХХ**. If the entered phone number does not correspond to this form, the service will warn you about this and will not allow you to create or update an object.
     2. *Date validators*. The start date and time of the sending cannot be later than the end date and time of the sending, just like the start and end time of business notifications.
-- **Logging (12)**. The service provides a detailed logging system. The folder with logs is located in the root of the project - `fabrique_logging` and includes the following files:
+- **Logging (12)**.  
+The service provides a detailed logging system. The folder with logs is located in the root of the project - `fabrique_logging` and includes the following files:
     1. `celery.log` - celery logging;
     2. `client.log` - logging of any operations that are related to a specific client (adding/editing/sending a message, etc.) linked to the ID;
     3. `message.log` - logging of any operations for a specific message (all requests and responses from an external service, all processing of a specific message, etc.) with reference to the ID;
     4. `sending.log` - logging of any operations for a specific newsletter (both requests to the API and external requests to send specific messages, etc.) with reference to the ID.
-- **Sending statistics (8)**. Every day at 07:00 (UTС), the service sends statistics to the email address specified in the environment variables. The scope of statistics includes such parameters as:
+- **Sending statistics (8)**.  
+Every day at 07:00 (UTС), the service sends statistics to the email address specified in the environment variables. The scope of statistics includes such parameters as:
     - number of created mailings over the past day
     - number of messages sent over the past day
     - percentage of successfully delivered messages
@@ -442,6 +447,14 @@ Thus, you just need to indicate the start and end time of the mailing, and the s
     - smsending.service.SendStat
 
     The sent message is presented in the form of an HTML template, which has a modern design.
+
+- **API Documentation (5)**.  
+When executing a request:
+    ```bash
+    curl -X GET "http://127.0.0.1:8000/fabrique-smsending/api/v1/docs/"
+    ```
+    <a href="https://app.swaggerhub.com/apis/ALEXANDRKOSYREW/fabrique_smsending/2#/">the page with Swagger UI</a> will open, which will contain a description of the developed API.
+
 
 ## Contributing
 

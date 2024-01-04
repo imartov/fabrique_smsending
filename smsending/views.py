@@ -3,7 +3,9 @@ from datetime import datetime
 from django.shortcuts import render
 from rest_framework import generics, viewsets, status
 from rest_framework.response import Response
+from django.shortcuts import redirect
 from .models import *
+
 from .serializers import *
 from .tasks import run_send_and_sheduled_messages
 from .service import SendStat
@@ -105,3 +107,7 @@ class SendingDeleteView(generics.DestroyAPIView):
 class MessageCreateView(generics.CreateAPIView):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
+
+
+def redirect_docs(request):
+    return redirect("https://app.swaggerhub.com/apis/ALEXANDRKOSYREW/fabrique_smsending/2#/")

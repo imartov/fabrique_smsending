@@ -19,4 +19,7 @@ urlpatterns = [
 
     # message
     path('message/create/', MessageCreateView.as_view(), name='message-create'), # http://127.0.0.1:8000/fabrique-smsending/api/v1/message/create/
+
+    # docs
+    path('docs/', redirect_docs, name='redirect-docs'), # http://127.0.0.1:8000/fabrique-smsending/api/v1/docs/
 ]
