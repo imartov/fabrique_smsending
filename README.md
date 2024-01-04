@@ -441,6 +441,8 @@ Thus, you just need to indicate the start and end time of the mailing, and the s
     - smsending.tasks.send_stat
     - smsending.service.SendStat
 
+    The sent message is presented in the form of an HTML template, which has a modern design.
+
 ## Contributing
 
 You can contribute to this project.
