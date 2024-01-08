@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import time, pytz
 
 from django.db.models import Q
 from .models import *
@@ -8,6 +9,7 @@ import environ
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from redmail import gmail
+from tzlocal import get_localzone
 
 sending_logger = logging.getLogger('sending')
 message_logger = logging.getLogger('message')
@@ -17,13 +19,16 @@ env = environ.Env()
 environ.Env.read_env()
 
 
-def serv_send(client_id:int, send_id:int, phone_number:str, message:str) -> int:
+def serv_send(send_id:int, client_id:int, phone_number:str,
+              message:str, limit_seconds=30, message_id=None) -> tuple:
 
-    client_logger.info(f'Client ID - {client_id} | Sending ID - {send_id} | Start sending a message.')
-    sending_logger.info(f'Sending ID - {send_id} | Client ID - {client_id} | Start sending a message.')
-
-    message_id = serv_create_message_and_get_id(datetime_send=datetime.now(), status_send=000,
-                                                send_id=send_id, client_id=client_id)
+    message_id = serv_create_message_and_get_id(
+        datetime_send=datetime.now(),
+        status_send=000,
+        send_id=send_id,
+        client_id=client_id
+    ) if not message_id else message_id
+    
     url_send_mes = f'https://probe.fbrq.cloud/v1/send/{message_id}'
     json_params = {
         "id": message_id,
@@ -34,18 +39,48 @@ def serv_send(client_id:int, send_id:int, phone_number:str, message:str) -> int:
         'Authorization': env('API_TOKEN')
     }
 
-    sending_logger.info(f'Sending ID - {send_id} | Client ID - {client_id} | Sending an API request and waiting for a response.')
-    client_logger.info(f'Client ID - {client_id} | Sending ID - {send_id} | Sending an API request and waiting for a response.')
+    message_logger.info(f'Message ID - {message_id} | Sending an API request and waiting for a response.')
+    client_logger.info(f'Client ID - {client_id} | Sending an API request and waiting for a response.')
 
-    datetime_send = datetime.now()
-    # response = requests.post(url=url_send_mes, json=json_params, headers=headers)
+    start_sending = datetime.now()
+    resp_exist = False
+    message_logger.info(f'Message ID - {message_id} | Begin response data validation.')
+    while not resp_exist:
+        if start_sending + timedelta(seconds=limit_seconds) <= datetime.now():
+            message_logger.info(f'Message ID - {message_id} | Timed out waiting for correct response.')
+            client_logger.info(f'Client ID - {client_id} | Timed out waiting for correct response.')
+            return False, message_id
+        else:
+            datetime_send = datetime.now()
+            try:
+                # response = requests.post(url=url_send_mes, json=json_params, headers=headers).json()
+                response = {"code": 200, "message": "string"}
+                # response = {"code": 200, "message": None}
+            except Exception as ex:
+                message_logger.error(f'Message ID - {message_id} | Something went wrong while sending the API request.\n{ex}')
+                response = None 
+            if validation_response(message_id=message_id, response=response):
+                resp_exist = True
+                message_logger.info(f'Message ID - {message_id} | Response received successfully.')
+                client_logger.info(f'Client ID - {client_id} | Response received successfully.')
+                serv_update_message(message_id=message_id, datetime_send=datetime_send, status_send=response["code"])
+                return True, message_id
+            else:
+                time.sleep(2)
 
-    sending_logger.info(f'Sending ID - {send_id} | Client ID - {client_id} | Response received successfully: status code - 200.')
-    client_logger.info(f'Client ID - {client_id} | Sending ID - {send_id} | Response received successfully: status code - 200.')
 
-    # return datetime_send, response.json()["code"]
-    serv_update_message(message_id=message_id, datetime_send=datetime_send, status_send=200)
-    return datetime_send, 200
+def validation_response(message_id:int, response:dict) -> bool:
+    if response.__class__ == dict and\
+    response["code"] and\
+    response["message"] and\
+    response["code"].__class__ == int and\
+    response["message"].__class__ == str:
+        message_logger.info(f'Message ID - {message_id} | Data validation was successful, the data is correct.')
+        return True
+    else:
+        return False
+    
+
 
 
 def serv_get_clients(send_id:int, phone_code:int, tag:str) -> list:
@@ -116,10 +151,27 @@ def serv_update_message(message_id:int, datetime_send:datetime, status_send:int)
     message_logger.info(f'Message ID - {message_id} | Message object successfully updated.')
 
 
+def check_update_delete_sending(send_id:int, datetime_run:int, message:str, phone_code_filter:int,
+                                tag_filter:str, datetime_finish:datetime, client_id:int):
+    if not Sending.objects.filter(id=send_id).exists():
+        sending_logger.info(f'Sending ID - {send_id} | Client ID - {client_id} | Message sending was canceled because the Sending object was deleted.')
+        client_logger.info(f'Client ID - {client_id} | Sending ID - {send_id} | Message sending was canceled because the Sending object was deleted.')
+        return False
+    else:
+        actual_sending = list(Sending.objects.values('datetime_run', 'message', 'phone_code_filter', 'tag_filter', 'datetime_finish').filter(id=send_id))[0]
+        if actual_sending['datetime_run'] != datetime_run or\
+        actual_sending['message'] != message or\
+        actual_sending['phone_code_filter'] != phone_code_filter or\
+        actual_sending['tag_filter'] != tag_filter or\
+        actual_sending['datetime_finish'] != datetime_finish:
+            sending_logger.info(f'Sending ID - {send_id} | Client ID - {client_id} | Message sending was canceled because the Sending object was changed.')
+            client_logger.info(f'Client ID - {client_id} | Sending ID - {send_id} | Message sending was canceled because the Sending object was changed.')
+            return False
+        else:
+            return True
+
 def check_bussines_interval(client_id:int, datetime_run:datetime, datetime_finish:datetime) -> tuple:
     client_logger.info(f'Client ID - {client_id} | Start checking the client business intervals')
-    # temp
-    # datetime_run, datetime_finish = get_sending(id=2)
 
     new_datetime_run = datetime_run
     new_datetime_finish = datetime_finish
@@ -148,6 +200,11 @@ def check_bussines_interval(client_id:int, datetime_run:datetime, datetime_finis
                 new_datetime_finish = None
     return new_datetime_run, new_datetime_finish
 
+def check_datetime_finish(client_id:int, datetime_finish:datetime) -> bool:
+    if datetime.now().astimezone(pytz.utc) > datetime_finish.astimezone(pytz.utc):
+        client_logger.info(f'Client ID - {client_id} | Sending of the message was canceled because the sending time has expired.')
+        return False
+    return True
 
 def remove_clients(send_id:int, remove_list:list, clients:list) -> list:
     sending_logger.info(f'| Sending ID - {send_id} | Removing from the mailing list clients with ID {remove_list}.')

@@ -7,7 +7,7 @@ from django.shortcuts import redirect
 from .models import *
 
 from .serializers import *
-from .tasks import run_send_and_sheduled_messages
+from .tasks import send_and_shedule_messages
 from .service import SendStat
 import logging
 
@@ -68,12 +68,13 @@ class SendingViewSet(viewsets.ModelViewSet):
         instance = serializer.save()
         sending_logger.info(f'''Sending ID - {instance.id} | Sending object saved.
                             {instance.datetime_run} | {instance.message} | {instance.phone_code_filter} | {instance.tag_filter} | {instance.datetime_finish}''')
-        run_send_and_sheduled_messages.delay(send_id=instance.id,
-                                             datetime_run=instance.datetime_run,
-                                             message=instance.message,
-                                             phone_code_filter=instance.phone_code_filter,
-                                             tag_filter=instance.tag_filter,
-                                             datetime_finish=instance.datetime_finish)
+        
+        send_and_shedule_messages.delay(send_id=instance.id,
+                                        datetime_run=instance.datetime_run,
+                                        datetime_finish=instance.datetime_finish,
+                                        message=instance.message,
+                                        phone_code_filter=instance.phone_code_filter,
+                                        tag_filter=instance.tag_filter)
         instance.save()
         return Response(serializer.data)
 
@@ -85,12 +86,14 @@ class SendingUpdateView(generics.UpdateAPIView):
         instance = serializer.save()
         sending_logger.info(f'''Sending ID - {instance.id} | Sending object updated.
                             {instance.datetime_run} | {instance.message} | {instance.phone_code_filter} | {instance.tag_filter} | {instance.datetime_finish}''')
-        run_send_and_sheduled_messages.delay(send_id=instance.id,
-                                             datetime_run=instance.datetime_run,
-                                             message=instance.message,
-                                             phone_code_filter=instance.phone_code_filter,
-                                             tag_filter=instance.tag_filter,
-                                             datetime_finish=instance.datetime_finish)
+        
+        send_and_shedule_messages.delay(send_id=instance.id,
+                                        datetime_run=instance.datetime_run,
+                                        datetime_finish=instance.datetime_finish,
+                                        message=instance.message,
+                                        phone_code_filter=instance.phone_code_filter,
+                                        tag_filter=instance.tag_filter)
+
         return Response({"message": "Object updated successfully"})    
 
 class SendingDeleteView(generics.DestroyAPIView):
@@ -98,12 +101,11 @@ class SendingDeleteView(generics.DestroyAPIView):
     serializer_class = SendingSerializer
 
     def perform_destroy(self, instance):
+        sending_logger.info(f'Sending ID - {instance.id} | API request has been sent to delete Sending object. Method: POST, url: http://127.0.0.1:8000/fabrique-smsending/api/v1/sending/delete/{instance.id}/')
         super().perform_destroy(instance)
-        sending_logger.info(f'Sending ID - {instance.id} | Sending object deleted successfully.')
+        sending_logger.info(f'Object deleted successfully.')
         return Response({"detail": "Object deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
 
-
-# message object
 class MessageCreateView(generics.CreateAPIView):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer

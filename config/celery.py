@@ -10,6 +10,7 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
 # app.conf.task_acks_late = True
 # app.conf.worker_prefetch_multiplier = 1
+app.control.purge() # delete all tasks
 
 app.conf.beat_schedule = {
     'send_stat': {
